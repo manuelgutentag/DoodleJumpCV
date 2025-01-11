@@ -14,26 +14,35 @@ class Doodle:
         self.falling = False
         self.ascending = False
         self.jump = False
+        self.heightincrease = False
+        self.scrolling = False
 
         self.gravity_const = 0.7
         self.gravity_speed = 0
 
+        self.cam_gravity_speed = 0
+        self.list_y_speed = 0
+
         self.score = 0
 
         self.list = [Vector2(w * 0.48, h * 4/5)] #create list for platforms including the starting platform
+        self.list_copy = [0,0,0,0,0,0] #copy of y values from the list-array
+        self.scrolldistance = 0
+        self.goal = 0
+        self.goalscrolloff = [Vector2(0,0), Vector2(0,0), Vector2(0,0), Vector2(0,0)]
         self.platform_rect = []
 
         self.base_height = h * 4/5
         self.new_height = 0
 
         self.doodle_left = pygame.image.load('Graphics/doodle_left.png').convert_alpha()
-        self.doodle_right = pygame.image.load('Graphics/doodle_right.png').convert_alpha()
+        #self.doodle_right = pygame.image.load('Graphics/doodle_right.png').convert_alpha()
         self.yellow_platform = pygame.image.load('Graphics/yellow_platform.png').convert_alpha()
 
-        for i in range(9):
-            #create platforms
-            self.list.append(Vector2(w * random.uniform(0.4, 0.6), h * (1 - i/5)))
-        for i in range(10):
+        for i in range(5):
+            #create initial set of platforms
+            self.list.append(Vector2(w * random.uniform(0.33, 0.6), h * (1 - (i+2)/5)))
+        for i in range(6):
             #create platform rects
             self.platform_rect.append(pygame.Rect(self.list[i].x, self.list[i].y, 225, 65))
 
@@ -41,40 +50,68 @@ class Doodle:
     def check_jump(self):
         self.jump = False
         #checks when doodle should jump the other platforms
-        for i in range(10):
-            if (self.y_doodle + 243 <= self.list[i].y + 45 and self.y_doodle + 243 >= self.list[i].y and
+        for i in range(6):
+            if (self.y_doodle + 243 <= self.list[i].y + 70 and self.y_doodle + 243 >= self.list[i].y and
                 (self.x_doodle + 200 >= self.list[i].x and self.x_doodle + 50 <= self.list[i].x + 225) and self.falling):
                 self.jump = True
-                self.new_height = self.list[i].y
 
-                #"scrolling" up after a successful height increase
+                #successful height increase
                 if self.list[i].y < h * 4/5:
-                    for j in range(10):
-                        self.list[j].y += self.base_height - self.new_height
-                        #clear platform_rect list to render the updated platform positions
-                        self.platform_rect.pop(0)
-                    for k in range(10):
-                        self.platform_rect.append(pygame.Rect(self.list[k].x, self.list[k].y, 225, 65))
-
-                print(self.platform_rect)
+                    self.heightincrease = True
+                    self.new_height = self.list[i].y
+                    self.scrolldistance = self.base_height - self.new_height  # set scroll distance
+                # list copy
+                for i in range(6):
+                    self.list_copy[i] = self.list[i].y
+                break
 
         return self.jump
+
+    def scroll(self):
+
+        if self.heightincrease:
+            self.list_y_speed = 50
+            self.cam_gravity_speed = 0
+
+            #scroll functionality
+            self.cam_gravity_speed += self.gravity_const
+            print(self.cam_gravity_speed)
+            for j in range(6):
+                if self.list[j].y < self.list_copy[j] + self.scrolldistance:
+                    self.list[j].y += self.list_y_speed - self.cam_gravity_speed
+                elif self.list[j].y > self.list_copy[j] + self.scrolldistance:
+                    self.cam_gravity_speed = 0
+                    self.list_y_speed = 0
+                    self.heightincrease = False
+
+                #print platforms
+                self.platform_rect[j] = pygame.Rect(self.list[j].x, self.list[j].y, 225, 65)
+                self.draw_platform()
+
+                if self.list[j].y > h:
+                    # moves platforms back up, if they are out of frame after jumping
+                    self.list[j].y -= h + h/5
+                    self.list[j].x = w * random.uniform(0.4, 0.6)
+
 
     def vertical_movement(self):
         self.y_doodle_prev = self.y_doodle
         self.gravity_speed += self.gravity_const
         self.y_doodle += self.y_doodle_speed + self.gravity_speed
-        if self.ascending:
-            self.score += 1
+        if self.check_jump():
+            print("jumped")
+            self.y_doodle_speed = -35
+            self.gravity_speed = 0
+
+        #check if ascending or falling
         if self.y_doodle_prev <= self.y_doodle:
             self.falling = True
             self.ascending = False
         else:
             self.ascending = True
             self.falling = False
-        if self.check_jump():
-            self.y_doodle_speed = -35
-            self.gravity_speed = 0
+        print(self.ascending)
+
 
     def move_left(self):
         self.x_doodle -= 2
@@ -87,7 +124,7 @@ class Doodle:
         screen.blit(self.doodle_left, doodle_rect)
 
     def draw_platform(self):
-        for i in range(10):
+        for i in range(6):
             screen.blit(self.yellow_platform, self.platform_rect[i])
 
 class Entity:
@@ -112,6 +149,7 @@ class Main:
     def update(self):
         self.doodle.vertical_movement()
         self.doodle.check_jump()
+        self.doodle.scroll()
 
     def draw_elements(self):
         self.background.draw_background_elements()
