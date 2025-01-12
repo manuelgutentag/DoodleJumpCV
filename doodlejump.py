@@ -20,10 +20,10 @@ class Doodle:
         self.gravity_const = 0.7
         self.gravity_speed = 0
 
-        self.cam_gravity_speed = 0
-        self.list_y_speed = 0
+        self.x_cam = 0
+        self.y_cam = 0
 
-        self.score = 0
+        self.camera_rect = pygame.Rect(self.x_cam, self.y_cam, w, h)
 
         self.list = [Vector2(w * 0.48, h * 4/5)] #create list for platforms including the starting platform
         self.list_copy = [0,0,0,0,0,0] #copy of y values from the list-array
@@ -70,19 +70,39 @@ class Doodle:
     def scroll(self):
 
         if self.heightincrease:
-            self.list_y_speed = 50
-            self.cam_gravity_speed = 0
+
+            self.camera_update()
+
+
+
+            if not self.ascending:
+                self.heightincrease = False
+
+
+
+
+
+
+
+
+
+
+
+
+            #self.list_y_speed = 50
+            #self.cam_gravity_speed = 0
 
             #scroll functionality
-            self.cam_gravity_speed += self.gravity_const
-            print(self.cam_gravity_speed)
+            #self.cam_gravity_speed += self.gravity_const
             for j in range(6):
+                '''
                 if self.list[j].y < self.list_copy[j] + self.scrolldistance:
                     self.list[j].y += self.list_y_speed - self.cam_gravity_speed
                 elif self.list[j].y > self.list_copy[j] + self.scrolldistance:
                     self.cam_gravity_speed = 0
                     self.list_y_speed = 0
                     self.heightincrease = False
+                '''
 
                 #print platforms
                 self.platform_rect[j] = pygame.Rect(self.list[j].x, self.list[j].y, 225, 65)
@@ -93,6 +113,11 @@ class Doodle:
                     self.list[j].y -= h + h/5
                     self.list[j].x = w * random.uniform(0.4, 0.6)
 
+    def camera_update(self):
+        self.x_cam = int(w / 2)
+        self.y_cam = self.y_doodle
+
+        self.camera_rect = pygame.Rect(self.x_cam, self.y_cam, w, h)
 
     def vertical_movement(self):
         self.y_doodle_prev = self.y_doodle
@@ -126,6 +151,10 @@ class Doodle:
     def draw_platform(self):
         for i in range(6):
             screen.blit(self.yellow_platform, self.platform_rect[i])
+
+
+
+
 
 class Entity:
 
