@@ -9,6 +9,8 @@ class Doodle:
         self.x_doodle_prev = 0
         self.y_doodle_prev = 0
 
+        self.y_doodle_copy = 0
+
         self.y_doodle_speed = 0
 
         self.falling = False
@@ -58,75 +60,51 @@ class Doodle:
                 #successful height increase
                 if self.list[i].y < h * 4/5:
                     self.heightincrease = True
+                    self.falling = False
                     self.new_height = self.list[i].y
                     self.scrolldistance = self.base_height - self.new_height  # set scroll distance
-                # list copy
-                for i in range(6):
-                    self.list_copy[i] = self.list[i].y
-                break
 
         return self.jump
 
     def scroll(self):
-
         if self.heightincrease:
-
             self.camera_update()
-
-
-
-            if not self.ascending:
+            self.draw_platform()
+            if self.falling:
                 self.heightincrease = False
-
-
-
-
-
-
-
-
-
-
-
-
-            #self.list_y_speed = 50
-            #self.cam_gravity_speed = 0
-
-            #scroll functionality
-            #self.cam_gravity_speed += self.gravity_const
-            for j in range(6):
-                '''
-                if self.list[j].y < self.list_copy[j] + self.scrolldistance:
-                    self.list[j].y += self.list_y_speed - self.cam_gravity_speed
-                elif self.list[j].y > self.list_copy[j] + self.scrolldistance:
-                    self.cam_gravity_speed = 0
-                    self.list_y_speed = 0
-                    self.heightincrease = False
-                '''
-
                 #print platforms
-                self.platform_rect[j] = pygame.Rect(self.list[j].x, self.list[j].y, 225, 65)
                 self.draw_platform()
+        else:
+            self.draw_platform()
+            #array copy to get the y-values that the platforms have before they are moved upwards with camera_update()
+            for j in range(6):
+                self.list_copy[j] = self.list[j].y
+            #copy of y_doodle so it can know what the last y-position was before increasing the height
+            self.y_doodle_copy = self.y_doodle
 
-                if self.list[j].y > h:
-                    # moves platforms back up, if they are out of frame after jumping
-                    self.list[j].y -= h + h/5
-                    self.list[j].x = w * random.uniform(0.4, 0.6)
+        for j in range(6):
+            if self.list[j].y > h:
+                # moves platforms back up, if they are out of frame after jumping
+                self.list[j].y -= h + h/5
+                self.list[j].x = w * random.uniform(0.4, 0.6)
 
     def camera_update(self):
-        self.x_cam = int(w / 2)
-        self.y_cam = self.y_doodle
+        #prints platforms as if a camera is moving upwards with the doodler
+        for i in range(6):
+            self.list[i].y = self.list_copy[i] + self.y_doodle_copy - self.y_doodle
 
-        self.camera_rect = pygame.Rect(self.x_cam, self.y_cam, w, h)
 
     def vertical_movement(self):
         self.y_doodle_prev = self.y_doodle
         self.gravity_speed += self.gravity_const
         self.y_doodle += self.y_doodle_speed + self.gravity_speed
         if self.check_jump():
-            print("jumped")
-            self.y_doodle_speed = -35
-            self.gravity_speed = 0
+            if self.heightincrease:
+                self.y_doodle_speed = -25
+                self.gravity_speed = 0
+            else:
+                self.y_doodle_speed = -35
+                self.gravity_speed = 0
 
         #check if ascending or falling
         if self.y_doodle_prev <= self.y_doodle:
@@ -135,7 +113,11 @@ class Doodle:
         else:
             self.ascending = True
             self.falling = False
-        print(self.ascending)
+
+        if self.check_jump():
+            self.falling = False
+            self.ascending = True
+
 
 
     def move_left(self):
@@ -150,6 +132,7 @@ class Doodle:
 
     def draw_platform(self):
         for i in range(6):
+            self.platform_rect[i] = pygame.Rect(self.list[i].x, self.list[i].y, 225, 65)
             screen.blit(self.yellow_platform, self.platform_rect[i])
 
 
@@ -183,7 +166,7 @@ class Main:
     def draw_elements(self):
         self.background.draw_background_elements()
         self.doodle.draw_doodle()
-        self.doodle.draw_platform()
+        self.doodle.scroll()
 
 pygame.init()
 screen = pygame.display.set_mode()
