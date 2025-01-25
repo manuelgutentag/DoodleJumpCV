@@ -13,6 +13,8 @@ class Doodle:
 
         self.y_doodle_speed = 0
 
+        self.score = 0
+
         self.falling = False
         self.ascending = False
         self.jump = False
@@ -42,7 +44,15 @@ class Doodle:
 
         for i in range(4):
             #create initial set of platforms
-            self.list.append(Vector2(w * random.uniform(0.33, 0.6), h * (1 - (i+2)/4)))
+            if i == 0:
+                self.random_num = random.randint(1,2)
+                if self.random_num == 1:
+                    self.list.append(Vector2(w * random.uniform(0.33, 0.45), h * (1 - (i + 2) / 4)))
+                elif self.random_num == 2:
+                    self.list.append(Vector2(w * random.uniform(0.55, 0.6), h * (1 - (i + 2) / 4)))
+            else:
+                self.list.append(Vector2(w * random.uniform(0.33, 0.6), h * (1 - (i + 2) / 4)))
+
         for i in range(5):
             #create platform rects
             self.platform_rect.append(pygame.Rect(self.list[i].x, self.list[i].y, 225, 65))
@@ -55,6 +65,8 @@ class Doodle:
             if (self.y_doodle + 243 <= self.list[i].y + 70 and self.y_doodle + 243 >= self.list[i].y and
                 (self.x_doodle + 200 >= self.list[i].x and self.x_doodle + 50 <= self.list[i].x + 225) and self.falling):
                 self.jump = True
+                if self.check_game_over():
+                    self.gameover = False
 
                 #successful height increase
                 if self.list[i].y < h * 3/5:
@@ -69,6 +81,7 @@ class Doodle:
         if self.heightincrease:
             self.camera_update()
             self.draw_platform()
+            self.score = int(self.score + (self.base_height - self.y_doodle - self.y_doodle_prev) / 100)
             if self.falling:
                 self.heightincrease = False
                 self.draw_platform()
@@ -124,7 +137,7 @@ class Doodle:
     def move_right(self):
         self.x_doodle += 2
 
-    def game_over(self):
+    def check_game_over(self):
         if self.y_doodle + 300 > h:
             self.gameover = True
             self.x_doodle = w * 48 / 100
@@ -137,11 +150,12 @@ class Doodle:
 
             self.y_doodle_speed = 0
 
+            self.score = 0
+
             self.falling = False
             self.ascending = False
             self.jump = False
             self.heightincrease = False
-            self.gameover = False
 
             self.gravity_const = 0.7
             self.gravity_speed = 0
@@ -155,13 +169,45 @@ class Doodle:
             self.new_height = 0
 
             for i in range(4):
-                # create initial set of platforms
-                self.list.append(Vector2(w * random.uniform(0.33, 0.6), h * (1 - (i + 2) / 4)))
+                #create initial set of platforms
+                if i == 0:
+                    self.random_num = random.randint(1,2)
+                    if self.random_num == 1:
+                        self.list.append(Vector2(w * random.uniform(0.33, 0.45), h * (1 - (i + 2) / 4)))
+                    elif self.random_num == 2:
+                        self.list.append(Vector2(w * random.uniform(0.55, 0.6), h * (1 - (i + 2) / 4)))
+                else:
+                    self.list.append(Vector2(w * random.uniform(0.33, 0.6), h * (1 - (i + 2) / 4)))
+
             for i in range(5):
                 # create platform rects
                 self.platform_rect.append(pygame.Rect(self.list[i].x, self.list[i].y, 225, 65))
 
+
         return self.gameover
+
+    def draw_game_over(self):
+        game_over_text = 'Game Over!'
+        game_over_text_surface = game_font.render(game_over_text, True, pygame.Color("Red"))
+        gameover_x = int(w * 10/24)
+        gameover_y = int(h * 2/30)
+        gameover_rect = game_over_text_surface.get_rect(center=(gameover_x, gameover_y))
+        screen.blit(game_over_text_surface, gameover_rect)
+
+    def draw_score(self):
+        score_text = 'Score:      '
+        score_surface = game_font.render(score_text, True, (0, 0, 0))
+        score_x = int(w * 9/24)
+        score_y = int(h * 1/30)
+        score_rect = score_surface.get_rect(center=(score_x, score_y))
+        screen.blit(score_surface, score_rect)
+
+        score_number =  str(self.score)
+        score_num_surface = game_font.render(score_number, True, (0, 0, 0))
+        score_num_x = int(w * 10/24)
+        score_num_y = int(h * 1/30)
+        score_num_rect = score_surface.get_rect(center=(score_num_x, score_num_y))
+        screen.blit(score_num_surface, score_num_rect)
 
     def draw_doodle(self):
         doodle_rect = pygame.Rect(self.x_doodle, self.y_doodle, 250, 243)
@@ -199,19 +245,22 @@ class Main:
         self.doodle.vertical_movement()
         self.doodle.check_jump()
         self.doodle.scroll()
-        self.doodle.game_over()
+        self.doodle.check_game_over()
 
     def draw_elements(self):
         self.background.draw_background_elements()
-        if not self.doodle.game_over():
-            self.doodle.draw_doodle()
-            self.doodle.scroll()
+        self.doodle.draw_score()
+        self.doodle.draw_doodle()
+        self.doodle.scroll()
+        if self.doodle.check_game_over():
+            self.doodle.draw_game_over()
 
 pygame.init()
 screen = pygame.display.set_mode()
 w, h = screen.get_size()
 print(w, h)
 clock = pygame.time.Clock()
+game_font = pygame.font.Font(None, 45)
 pygame.key.set_repeat(1, 1) # for keeping button pressed
 
 maingame = Main()
