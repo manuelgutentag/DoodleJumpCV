@@ -38,9 +38,9 @@ class Doodle:
         self.base_height = h * 4/5
         self.new_height = 0
 
-        self.doodle_left = pygame.image.load('Graphics/doodle_left.png').convert_alpha()
+        self.doodle_left = pygame.image.load('../Graphics/doodle_left.png').convert_alpha()
         #self.doodle_right = pygame.image.load('Graphics/doodle_right.png').convert_alpha()
-        self.yellow_platform = pygame.image.load('Graphics/yellow_platform.png').convert_alpha()
+        self.yellow_platform = pygame.image.load('../Graphics/yellow_platform.png').convert_alpha()
 
         for i in range(4):
             #create initial set of platforms
@@ -225,7 +225,7 @@ class Doodle:
 class Entity:
 
     def __init__(self):
-        self.background = pygame.image.load('Graphics/background.png').convert_alpha()
+        self.background = pygame.image.load('../Graphics/background.png').convert_alpha()
 
     def draw_background_elements(self):
         border_rect_l = pygame.Rect(0, 0, w / 3, h)
