@@ -100,7 +100,7 @@ class Doodle:
                 self.list[j].x = w * random.uniform(0.4, 0.6)
 
     def camera_update(self):
-        #updates platforms as if a camera is moving upwards with the doodler
+        #updates platforms as if a camera is movement upwards with the doodler
         for i in range(5):
             self.list[i].y = self.list_copy[i] + self.y_doodle_copy - self.y_doodle + (self.y_doodle_copy - self.y_doodle) * 0.47
 
