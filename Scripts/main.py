@@ -3,6 +3,7 @@ from PIL import Image, ImageGrab
 import numpy as np
 import cv2 as cv
 import time
+import threading
 from threading import Thread
 from movement.movement_agent import MovementAgent
 
@@ -15,15 +16,17 @@ class MainAgent:
         self.cur_img = None     #BGR Image
         self.cur_imgHSV = None  #HSV Image
 
+        self.lock = threading.Lock()   # Instantiierung von lock Objekt
 
 def update_screen(agent):
 
     t0 = time.time()
     while True:
-        agent.cur_img = ImageGrab.grab()       #takes snapshot of desktop
-        agent.cur_img = np.array(agent.cur_img)   #store image as numpy array
-        agent.cur_img = cv.cvtColor(agent.cur_img, cv.COLOR_RGB2BGR)    #OpenCV uses BGR instead of RGB
-        agent.cur_imgHSV = cv.cvtColor(agent.cur_img, cv.COLOR_BGR2HSV) #Store an HSV Image additionally to the BGR Image
+        with main_agent.lock: # Thread locken
+            agent.cur_img = ImageGrab.grab()       #takes snapshot of desktop
+            agent.cur_img = np.array(agent.cur_img)   #store image as numpy array
+            agent.cur_img = cv.cvtColor(agent.cur_img, cv.COLOR_RGB2BGR)    #OpenCV uses BGR instead of RGB
+            agent.cur_imgHSV = cv.cvtColor(agent.cur_img, cv.COLOR_BGR2HSV) #Store an HSV Image additionally to the BGR Image
 
         #cv.imshow("Computer Vision", agent.cur_img)
         key = cv.waitKey(1)     #0 as argument would be holding until I press a new key, any other number is in ms

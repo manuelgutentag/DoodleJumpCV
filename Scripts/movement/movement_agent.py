@@ -1,35 +1,46 @@
-
+import time
 
 import cv2 as cv
 import numpy as np
 import pyautogui
+from matplotlib import pyplot as plt
 
 class MovementAgent:
     def __init__(self, main_agent) -> None:
         self.main_agent = main_agent
-        self.doodle_target = cv.imread("/home/manuel/PycharmProjects/DoodleJumpCV/Scripts/movement/assets/doodle_left.png")
+        self.doodle_template = cv.imread("/home/manuel/PycharmProjects/DoodleJumpCV/Scripts/movement/assets/doodle_template.png")
+        self.platform_template = cv.imread("/home/manuel/PycharmProjects/DoodleJumpCV/Scripts/movement/assets/platform_template.png")
         self.fishing_thread = None
+
+        self.lock = main_agent.lock
 
     def find_doodle(self):
         if self.main_agent.cur_img is not None:
-            cur_img = self.main_agent.cur_img
             print("finding doodle..")
-            doodle_location = cv.matchTemplate(cur_img, self.doodle_target,cv.TM_CCOEFF_NORMED)
-            doodle_loc_arr = np.array(doodle_location)
+            doodle_res = cv.matchTemplate(self.main_agent.cur_img, self.doodle_template,cv.TM_CCOEFF_NORMED)
+            doodle_loc_arr = np.array(doodle_res)
 
             min_val, max_val, min_loc, max_loc = cv.minMaxLoc(doodle_loc_arr)
             print(max_loc)
 
-
-
-
-        #cv.imshow("Match Template", doodle_loc_arr)
-        #cv.waitKey(0)
-
-
+            cv.rectangle(self.main_agent.cur_img, max_loc, (max_loc[0] + 230, max_loc[1] + 200), (255,0,0), 2)
 
     def find_platforms(self):
-        pass
+        if self.main_agent.cur_img is not None:
+            print("finding platforms..")
+            platform_res = cv.matchTemplate(self.main_agent.cur_img, self.platform_template,cv.TM_CCOEFF_NORMED)
+            w = 224
+            h = 58
+            threshold = 0.8
+            loc = np.where(platform_res >= threshold)
+            for pt in zip(*loc[::-1]):
+                cv.rectangle(self.main_agent.cur_img, pt, (pt[0] + w, pt[1] + h), (0,255,0), 1)
+
+
+            self.main_agent.cur_img = cv.cvtColor(self.main_agent.cur_img, cv.COLOR_BGR2RGB)    #OpenCV uses BGR instead of RGB
+            plt.imshow(self.main_agent.cur_img)
+            plt.show()
+
 
     def move_doodle(self):
         pass
@@ -40,7 +51,11 @@ class MovementAgent:
 
 
     def run(self):
-        self.find_doodle()
+        while True:
+            time.sleep(5)
+            with self.lock:   # Thread verschließen (kein Zugang auf den screenshot cur_img von anderen Threads)
+                self.find_doodle()
+                self.find_platforms()
 
 
 
