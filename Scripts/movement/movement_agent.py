@@ -2,8 +2,8 @@ import time
 
 import cv2 as cv
 import numpy as np
-import pyautogui
 from matplotlib import pyplot as plt
+
 
 class MovementAgent:
     def __init__(self, main_agent) -> None:
@@ -33,13 +33,27 @@ class MovementAgent:
             h = 58
             threshold = 0.8
             loc = np.where(platform_res >= threshold)
-            for pt in zip(*loc[::-1]):
-                cv.rectangle(self.main_agent.cur_img, pt, (pt[0] + w, pt[1] + h), (0,255,0), 1)
+            print("new call")
+            if loc[0].size > 0:
+                for pt in zip(*loc[::-1]):
+                    print("pt", pt)
+                    cv.rectangle(self.main_agent.cur_img, pt, (pt[0] + w, pt[1] + h), (0, 255, 0), 1)
+            else:
+                print("No matches found above the threshold.")
 
 
             self.main_agent.cur_img = cv.cvtColor(self.main_agent.cur_img, cv.COLOR_BGR2RGB)    #OpenCV uses BGR instead of RGB
+
+
+            #why does imshow not work?
+            #cv.imshow("platforms detected", self.main_agent.cur_img)
             plt.imshow(self.main_agent.cur_img)
             plt.show()
+
+
+
+
+
 
 
     def move_doodle(self):

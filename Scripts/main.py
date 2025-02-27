@@ -6,7 +6,7 @@ import time
 import threading
 from threading import Thread
 from movement.movement_agent import MovementAgent
-
+import pyautogui
 
 class MainAgent:
     def __init__(self) -> None:
@@ -18,12 +18,26 @@ class MainAgent:
 
         self.lock = threading.Lock()   # Instantiierung von lock Objekt
 
+        #boundaries für screenshot
+        self.left = 3200
+        self.top = 0
+        self.width = 1350
+        self.height = 2160
+
+
 def update_screen(agent):
 
     t0 = time.time()
     while True:
         with main_agent.lock: # Thread locken
-            agent.cur_img = ImageGrab.grab()       #takes snapshot of desktop
+            # Capture the entire screen
+            screenshot = pyautogui.screenshot()
+
+            # Crop the screenshot to the defined region
+            region = (agent.left, agent.top, agent.left + agent.width, agent.top + agent.height)
+            captured_region = screenshot.crop(region)
+
+            agent.cur_img = captured_region #takes snapshot of desktop
             agent.cur_img = np.array(agent.cur_img)   #store image as numpy array
             agent.cur_img = cv.cvtColor(agent.cur_img, cv.COLOR_RGB2BGR)    #OpenCV uses BGR instead of RGB
             agent.cur_imgHSV = cv.cvtColor(agent.cur_img, cv.COLOR_BGR2HSV) #Store an HSV Image additionally to the BGR Image
@@ -36,38 +50,14 @@ def update_screen(agent):
        # print("FPS: " + str(1 / ex_time))
         t0 = time.time()
 
-def print_menu():
-    print("Enter a command:")
-    print("\tS\tStart the main agent.")
-    print("\tM\tStart the movement agent.")
-    print("\tQ\tQuit.")
-
 if __name__ == "__main__":
     main_agent = MainAgent()
 
-    print_menu()
-    while True:
-        user_input = input()
-        user_input = str.lower(user_input).strip()
+    update_screen_thread = Thread(target=update_screen, args=(main_agent,), name="update screen thread", daemon=True)
+    update_screen_thread.start()
 
-        if user_input == "s":
-            update_screen_thread = Thread(target=update_screen, args=(main_agent,), name="update screen thread", daemon=True)
-            update_screen_thread.start()
-            print("Thread started")
+    movement_agent = MovementAgent(main_agent)
+    movement_agent.run()
 
-        elif user_input == "m":
-            movement_agent = MovementAgent(main_agent)
-            movement_agent.run()
-
-        elif user_input == "q":
-            cv.destroyAllWindows()
-            print("Exiting application")
-            break
-
-        else:
-            print("Input error.")
-            print_menu()
-
-    print("Done.")
 
 
