@@ -45,7 +45,7 @@ class MovementAgent:
             self.main_agent.cur_img = cv.cvtColor(self.main_agent.cur_img, cv.COLOR_BGR2RGB)    #OpenCV uses BGR instead of RGB
 
 
-            #why does imshow not work?
+            #why does imshow not work
             #cv.imshow("platforms detected", self.main_agent.cur_img)
             plt.imshow(self.main_agent.cur_img)
             plt.show()
